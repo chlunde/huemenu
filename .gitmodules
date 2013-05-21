@@ -1,0 +1,3 @@
+[submodule "phue"]
+    path = phue
+    url = https://github.com/studioimaginaire/phue.git
