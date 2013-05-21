@@ -1,0 +1,64 @@
+#!/usr/bin/env python
+
+# status bar example from: http://taoofmac.com/space/blog/2007/04/22/1745
+
+from Foundation import NSObject
+from AppKit import NSApplication, NSMenu, NSMenuItem, NSStatusBar, \
+    NSVariableStatusItemLength, NSImage
+from PyObjCTools import AppHelper
+
+import sys
+sys.path.append("phue")
+
+from phue import Bridge
+
+IP = '192.168.0.11'
+
+# Random file...
+icon = '/System/Library/CoreServices/Menu Extras/User.menu/Contents/Resources/UserSwitcher.pdf'
+
+
+class HueMenu(NSObject):
+    def applicationDidFinishLaunching_(self, notification):
+        statusbar = NSStatusBar.systemStatusBar()
+        self.statusitem = statusbar.statusItemWithLength_(NSVariableStatusItemLength)
+
+        # Let it highlight upon clicking
+        self.statusitem.setHighlightMode_(1)
+
+        iconimage = NSImage.alloc().initByReferencingFile_(icon)
+        self.statusitem.setImage_(iconimage)
+
+        self.menu = NSMenu.alloc().init()
+
+        def addmenu(title, action):
+            menuitem = NSMenuItem.alloc() \
+                .initWithTitle_action_keyEquivalent_(title, action, '')
+            self.menu.addItem_(menuitem)
+
+        addmenu('Lights on', 'lightson:')
+        addmenu('Lights off', 'lightsoff:')
+        addmenu('Quit', 'terminate:')
+
+        self.statusitem.setMenu_(self.menu)
+
+    def lightson_(self, notification):
+        b = Bridge(IP)
+        b.connect()
+
+        for light in b.get_light_objects('list'):
+            light.on = True
+
+    def lightsoff_(self, notification):
+        b = Bridge(IP)
+        b.connect()
+
+        for light in b.get_light_objects('list'):
+            light.on = False
+
+
+if __name__ == "__main__":
+    app = NSApplication.sharedApplication()
+    delegate = HueMenu.alloc().init()
+    app.setDelegate_(delegate)
+    AppHelper.runEventLoop()
